@@ -1,9 +1,9 @@
 /*
- * NSToolbarSpaceItem.j
+ * NSBox.j
  * nib2cib
  *
  * Created by Dimitris Tsitses.
- * Copyright 2010, Blueberry Associates LLC.
+ * Copyright 2009, Blueberry Associates LLC.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,11 +20,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-@import <AppKit/CPToolbarItem.j>
+@import <AppKit/CPBox.j>
 
 
+@implementation CPBox (NSCoding)
 
-@implementation NSToolbarSpaceItem : CPToolbarItem
+- (id)NS_initWithCoder:(CPCoder)aCoder
+{
+    if (self = [super NS_initWithCoder:aCoder])
+    {
+        _boxType       = [aCoder decodeIntForKey:@"NSBoxType"];
+        _titlePosition = [aCoder decodeIntForKey:@"NSTitlePosition"];
+        _contentView   = [aCoder decodeObjectForKey:@"NSContentView"];
+       
+        var titleCell  = [aCoder decodeObjectForKey:@"NSTitleCell"];        
+        _titleFromNib  = [titleCell stringValue];
+    }
+    
+    return self;
+}
+
+@end
+
+@implementation NSBox : CPBox
 {
 }
 
@@ -35,7 +53,7 @@
 
 - (Class)classForKeyedArchiver
 {
-    return [CPToolbarItem class];
+    return [CPBox class];
 }
 
 @end

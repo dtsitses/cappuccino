@@ -2,9 +2,8 @@
  * NSToolbarItem.j
  * nib2cib
  *
- * Created by Francisco Tolmasky and Dimitris Tsitses.
- * Copyright 2010, 280 North, Inc.
- * Copyright 2010, Blueberry Associates LLC.
+ * Created by Dimitris Tsitses.
+ * Copyright 2009, Blueberry Associates LLC.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,50 +22,66 @@
 
 @import <AppKit/CPToolbarItem.j>
 
-
-NS_CPToolbarItemIdentifierMap =
-{
-    @"NSToolbarSeparatorItem"           : CPToolbarSeparatorItemIdentifier,
-    @"NSToolbarSpaceItem"               : CPToolbarSpaceItemIdentifier,
-    @"NSToolbarFlexibleSpaceItem"       : CPToolbarFlexibleSpaceItemIdentifier,
-    @"NSToolbarShowColorsItem"          : CPToolbarShowColorsItemIdentifier,
-    @"NSToolbarShowFontsItem"           : CPToolbarShowFontsItemIdentifier,
-    @"NSToolbarCustomizeToolbarItem"    : CPToolbarCustomizeToolbarItemIdentifier,
-    @"NSToolbarPrintItem"               : CPToolbarPrintItemIdentifier
-};
+var NSToolbarSeparatorItemIdentifier        = @"NSToolbarSeparatorItem",
+    NSToolbarSpaceItemIdentifier            = @"NSToolbarSpaceItem",
+    NSToolbarFlexibleSpaceItemIdentifier    = @"NSToolbarFlexibleSpaceItem",
+    NSToolbarShowColorsItemIdentifier       = @"NSToolbarShowColorsItem",
+    NSToolbarShowFontsItemIdentifier        = @"NSToolbarShowFontsItem",
+    NSToolbarCustomizeToolbarItemIdentifier = @"NSToolbarCustomizeToolbarItem",
+    NSToolbarPrintItemIdentifier            = @"NSToolbarPrintItem";
+    
 
 @implementation CPToolbarItem (NSCoding)
 
 - (id)NS_initWithCoder:(CPCoder)aCoder
 {
-    self = [super init];
-
     if (self)
-    {
-        var NS_itemIdentifier = [aCoder decodeObjectForKey:@"NSToolbarItemIdentifier"];
-
-        _itemIdentifier = NS_CPToolbarItemIdentifierMap[NS_itemIdentifier] || NS_itemIdentifier;
-
-        _minSize = [aCoder decodeSizeForKey:@"NSToolbarItemMinSize"] || CGSizeMakeZero();
-        _maxSize = [aCoder decodeSizeForKey:@"NSToolbarItemMaxSize"] || CGSizeMakeZero();
-
-        [self setLabel:[aCoder decodeObjectForKey:@"NSToolbarItemLabel"]];
-        [self setPaletteLabel:[aCoder decodeObjectForKey:@"NSToolbarItemPaletteLabel"]];
-        [self setToolTip:[aCoder decodeObjectForKey:@"NSToolbarItemToolTip"]];
-
-        [self setTag:[aCoder decodeObjectForKey:@"NSToolbarItemTag"]];
-        [self setTarget:[aCoder decodeObjectForKey:@"NSToolbarItemTarget"]];
-        [self setAction:CPSelectorFromString([aCoder decodeObjectForKey:@"NSToolbarItemAction"])];
-        [self setEnabled:[aCoder decodeBoolForKey:@"NSToolbarItemEnabled"]];
-
-        [self setImage:[aCoder decodeBoolForKey:@"NSToolbarItemImage"]];
-
-        [self setView:[aCoder decodeObjectForKey:@"NSToolbarItemView"]];
-
-        [self setVisibilityPriority:[aCoder decodeIntForKey:@"NSToolbarItemVisibilityPriority"]];
-        [self setAutovalidates:[aCoder decodeBoolForKey:"NSToolbarItemAutovalidates"]];
+    {   
+        _itemIdentifier      = [aCoder decodeObjectForKey:"NSToolbarItemIdentifier"];
+        
+        // change the NS stardard identifier to the CP equivalent
+        switch (_itemIdentifier)
+        {
+            case NSToolbarSeparatorItemIdentifier:
+                _itemIdentifier = CPToolbarSeparatorItemIdentifier;
+                break;
+	        case NSToolbarSpaceItemIdentifier:
+                _itemIdentifier = CPToolbarSpaceItemIdentifier;
+                break;
+            case NSToolbarFlexibleSpaceItemIdentifier:
+                _itemIdentifier = CPToolbarFlexibleSpaceItemIdentifier;
+                break;
+            case NSToolbarShowColorsItemIdentifier:
+                _itemIdentifier = CPToolbarShowColorsItemIdentifier;
+                break;
+            case NSToolbarShowFontsItemIdentifier:
+                _itemIdentifier = CPToolbarShowFontsItemIdentifier;
+                break;
+            case NSToolbarCustomizeToolbarItemIdentifier:
+                _itemIdentifier = CPToolbarCustomizeToolbarItemIdentifier;
+                break;
+            case NSToolbarPrintItemIdentifier:
+                _itemIdentifier = CPToolbarPrintItemIdentifier;
+                break;
+        }
+		
+        _label               = [aCoder decodeObjectForKey:"NSToolbarItemLabel"];
+        _paletteLabel        = [aCoder decodeObjectForKey:"NSToolbarItemPaletteLabel"];
+        _toolTip             = [aCoder decodeObjectForKey:"NSToolbarItemToolTip"];
+        _tag                 = [aCoder decodeIntForKey:"NSToolbarItemTag"];
+        _target              = [aCoder decodeObjectForKey:"NSToolbarItemTarget"];
+        _action              = [aCoder decodeObjectForKey:"NSToolbarItemAction"];
+        _isEnabled           = [aCoder decodeBoolForKey:"NSToolbarItemEnabled"];        
+        _view                = [aCoder decodeObjectForKey:"NSToolbarItemView"];
+        _minSize             = [aCoder decodeObjectForKey:"NSToolbarItemMinSize"];
+        _maxSize             = [aCoder decodeObjectForKey:"NSToolbarItemMaxSize"];
+        _visibilityPriority  = [aCoder decodeIntForKey:"NSToolbarItemVisibilityPriority"];
+        _autovalidates       = [aCoder decodeBoolForKey:"NSToolbarItemAutovalidates"];
+        
+        _image               = [aCoder decodeObjectForKey:"NSToolbarItemImage"];
+//      _alternateImage      = [aCoder decodeObjectForKey:""];                              // no altImage in Nib
     }
-
+    
     return self;
 }
 

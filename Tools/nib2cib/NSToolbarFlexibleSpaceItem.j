@@ -1,9 +1,9 @@
 /*
  * NSToolbarFlexibleSpaceItem.j
- * AppKit
+ * nib2cib
  *
- * Created by Francisco Tolmasky.
- * Copyright 2010, 280 North, Inc.
+ * Created by Dimitris Tsitses.
+ * Copyright 2010, Blueberry Associates LLC.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,16 +20,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-@import <AppKit/_CPToolbarFlexibleSpaceItem.j>
+@import <AppKit/CPToolbarItem.j>
 
 
-@implementation NSToolbarFlexibleSpaceItem : _CPToolbarFlexibleSpaceItem
+
+@implementation NSToolbarFlexibleSpaceItem : CPToolbarItem
 {
+}
+
+- (id)initWithCoder:(CPCoder)aCoder
+{
+    return [self NS_initWithCoder:aCoder];
 }
 
 - (Class)classForKeyedArchiver
 {
-    return [_CPToolbarFlexibleSpaceItem class];
+    return [CPToolbarItem class];
 }
 
 @end

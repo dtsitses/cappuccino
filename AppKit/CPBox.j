@@ -2,8 +2,8 @@
  * CPBox.j
  * AppKit
  *
- * Created by Ross Boucher.
- * Copyright 2009, 280 North, Inc.
+ * Created by Dimitris Tsitses.
+ * Copyright 2009, Blueberry Associates LLC.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,226 +19,470 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
- 
-@import "CPView.j"
 
-// CPBorderType
-CPNoBorder      = 0;
-CPLineBorder    = 1;    
-CPBezelBorder   = 2;
-CPGrooveBorder  = 3;
+@import <Foundation/CPObject.j>
+@import <Foundation/CPString.j>
 
+@import <AppKit/CPColor.j>
+@import <AppKit/CPImage.j>
+@import <AppKit/CPTextField.j>
+@import <AppKit/CPView.j>
+
+#include "CoreGraphics/CGGeometry.h"
+
+
+/*
+    The box has no title.
+    @global
+    @group CPTitlePosition
+*/
+CPNoTitle     = 0;
+/*
+    Title positioned above the box’s top border.
+    @global
+    @group CPTitlePosition
+*/
+//CPAboveTop    = 1;
+/*
+    Title positioned within the box’s top border.
+    @global
+    @group CPTitlePosition
+*/
+CPAtTop       = 2;
+/*
+    Title positioned below the box’s top border.
+    @global
+    @group CPTitlePosition
+*/
+//CPBelowTop    = 3;
+/*
+    Title positioned above the box’s bottom border.
+    @global
+    @group CPTitlePosition
+*/
+//CPAboveBottom = 4;
+/*
+    Title positioned within the box’s bottom border.
+    @global
+    @group CPTitlePosition
+*/
+//CPAtBottom    = 5;
+/*
+    Title positioned below the box’s bottom border.
+    @global
+    @group CPTitlePosition
+*/
+//CPBelowBottom = 6;
+
+
+/*
+    Specifies the primary box appearance. This is the default box type.
+    @global
+    @group CPBoxType
+*/
+CPBoxPrimary   = 0;
+/*
+    Specifies the secondary box appearance.
+    @global
+    @group CPBoxType
+*/
+//CPBoxSecondary = 1;
+/*
+    Specifies that the box is a separator.
+    @global
+    @group CPBoxType
+*/
+//CPBoxSeparator = 2;
+/*
+    Specifies that the box is a Mac OS X v10.2–style box.
+    @global
+    @group CPBoxType
+*/
+CPBoxOldStyle  = 3;
+/*
+    Specifies that the appearance of the box is determined entirely by the by box-configuration methods, without automatically applying Cappuccino UI guidelines. 
+    @global
+    @group CPBoxType
+*/
+//CPBoxCustom    = 4;
+
+
+var CPBoxPrimaryBezelBackgroundColor  = nil,
+    CPBoxOldStyleBezelBackgroundColor = nil;
+
+var PRIMARY_LEFT_INSET    = 7.0,
+    PRIMARY_RIGHT_INSET   = 7.0,
+    PRIMARY_TOP_INSET     = 7.0,
+    PRIMARY_BOTTOM_INSET  = 7.0,
+    
+    OLDSTYLE_LEFT_INSET   = 7.0,
+    OLDSTYLE_RIGHT_INSET  = 7.0,
+    OLDSTYLE_TOP_INSET    = 1.0,
+    OLDSTYLE_BOTTOM_INSET = 1.0;
+    
+/*! 
+    @ingroup appkit
+    @class CPBox
+
+    A CPBox object is a view that draws a line around its rectangular bounds and that displays a title
+    on or near the line (or might display neither line nor title). A CPBox also has a content view to
+    which other views can be added; it thus offers a way for an application to group related views.
+*/
 @implementation CPBox : CPView
 {
-    CPBorderType    _borderType;
+    _CPBoxTitle       _titleView;
+    CPTextField       _titleField;
+    CPString          _titleFromNib;
     
-    CPColor         _borderColor;
-    CPColor         _fillColor;
+    CPView            _contentView;
+    CPView            _backgroundView;
     
-    float           _cornerRadius;
-    float           _borderWidth;
+    CPBoxType         _boxType;
     
-    CPSize          _contentMargin;
-    CPView          _contentView;
+    CPTitlePosition   _titlePosition;
 }
 
-+ (id)boxEnclosingView:(CPView)aView
+/*
+    @ignore
+*/
++ (void)initialize
 {
-    var box = [[self alloc] initWithFrame:CGRectMakeZero()],
-        enclosingView = [aView superview];
-
-    [box setFrameFromContentFrame:[aView frame]];
-
-    [enclosingView replaceSubview:aView with:box];
+    if (self != CPBox)
+        return;
     
-    [box setContentView:aView];
-    
-    return box;
+    var bundle = [CPBundle bundleForClass:self],
+
+        // for CPBoxPrimary
+        primaryBezelTopLeftImage     = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxPrimaryBezelTopLeft.png"] size:CGSizeMake(7.0, 7.0)],
+        primaryBezelTopImage         = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxPrimaryBezelTop.png"] size:CGSizeMake(1.0, 7.0)],
+        primaryBezelTopRightImage    = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxPrimaryBezelTopRight.png"] size:CGSizeMake(7.0, 7.0)],
+        
+        primaryBezelLeftImage        = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxPrimaryBezelLeft.png"] size:CGSizeMake(7.0, 1.0)],
+        primaryBackgroundImage       = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxPrimaryBackgroundCenter.png"] size:CGSizeMake(1.0, 1.0)],
+        primaryBezelRightImage       = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxPrimaryBezelRight.png"] size:CGSizeMake(7.0, 1.0)],
+
+        primaryBezelBottomLeftImage  = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxPrimaryBezelBottomLeft.png"] size:CGSizeMake(7.0, 7.0)],
+        primaryBezelBottomImage      = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxPrimaryBezelBottom.png"] size:CGSizeMake(1.0, 7.0)],
+        primaryBezelBottomRightImage = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxPrimaryBezelBottomRight.png"] size:CGSizeMake(7.0, 7.0)],
+        
+        // for CPBoxOldStyle
+        oldStyleBezerImage           = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxOldStyleBezel.png"] size:CGSizeMake(1.0, 1.0)],
+        
+        oldStyleBezelLeftImage       = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxOldStyleBezelLeft.png"] size:CGSizeMake(7.0, 1.0)],
+        oldStyleBackgroundImage      = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxOldStyleBackgroundCenter.png"] size:CGSizeMake(1.0, 1.0)],
+        oldStyleBezelRightImage      = [[CPImage alloc] initWithContentsOfFile:[bundle pathForResource:@"CPBox/CPBoxOldStyleBezelRight.png"] size:CGSizeMake(7.0, 1.0)];
+       
+    CPBoxPrimaryBezelBackgroundColor = [CPColor colorWithPatternImage:[[CPNinePartImage alloc] initWithImageSlices:
+        [
+            primaryBezelTopLeftImage,
+            primaryBezelTopImage,
+            primaryBezelTopRightImage,
+            
+            primaryBezelLeftImage,
+            primaryBackgroundImage,
+            primaryBezelRightImage,
+
+            primaryBezelBottomLeftImage,
+            primaryBezelBottomImage,
+            primaryBezelBottomRightImage
+        ]]];       
+            
+    CPBoxOldStyleBezelBackgroundColor = [CPColor colorWithPatternImage:[[CPNinePartImage alloc] initWithImageSlices:
+        [
+            oldStyleBezelLeftImage,
+            oldStyleBezerImage,
+            oldStyleBezelRightImage,
+            
+            oldStyleBezelLeftImage,
+            oldStyleBackgroundImage,
+            oldStyleBezelRightImage,
+
+            oldStyleBezelLeftImage,
+            oldStyleBezerImage,
+            oldStyleBezelRightImage
+        ]]];
 }
 
-- (id)initWithFrame:(CPRect)frameRect
+- (id)initWithFrame:(CGRect)aFrame
 {
-    self = [super initWithFrame:frameRect];
+    self = [super initWithFrame:aFrame];
     
     if (self)
     {
-        _fillColor = [CPColor clearColor];
-        _borderColor = [CPColor blackColor];
-
-        _borderWidth = 1.0;
-        _contentMargin = CGSizeMake(0.0, 0.0);
-
-        _contentView = [[CPView alloc] initWithFrame:[self bounds]];
-
-        [self addSubview:_contentView];
+        _boxType = CPBoxPrimary;
+        _titlePosition = CPAtTop;
+        
+        [self _createSubviews];
     }
-
+    
     return self;
 }
 
-// Configuring Boxes
-
-- (CPRect)borderRect
+- (void)viewDidMoveToWindow
 {
-    return [self bounds];
-}
-
-- (CPBorderType)borderType
-{
-    return _borderType;
-}
-
-- (void)setBorderType:(CPBorderType)value
-{
-    _borderType = value;
-    [self setNeedsDisplay:YES];
-}
-
-- (CPColor)borderColor
-{
-    return _borderColor;
-}
-
-- (void)setBorderColor:(CPColor)color
-{
-    if ([color isEqual:_borderColor])
+    // only these box types are supported at the moment
+    if (_boxType != CPBoxPrimary && _boxType != CPBoxOldStyle)
         return;
 
-    _borderColor = color;
-    [self setNeedsDisplay:YES];
-}
-
-- (float)borderWidth
-{
-    return _borderWidth;
-}
-
-- (void)setBorderWidth:(float)width
-{
-    if (width === _borderWidth)
+    // only these title positions are supported at the moment
+    if (_titlePosition != CPAtTop && _titlePosition != CPNoTitle)
         return;
-
-    _borderWidth = width;
-    [self setNeedsDisplay:YES];
+        
+    [self _layoutSubviews];
 }
 
-- (float)cornerRadius
+/* @ignore */
+- (void)_createSubviews
 {
-    return _cornerRadius;
+    var bounds = [self bounds];
+    
+    _titleView = [[_CPBoxTitle alloc] initWithFrame:CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), 0.0)];
+    [_titleView setAutoresizingMask:CPViewWidthSizable];
+    [self addSubview:_titleView];
+    _titleField = [_titleView titleField];
+    [_titleField setStringValue:_titleFromNib];
+    
+    _backgroundView = [[CPView alloc] initWithFrame:CGRectMakeZero()];
+    [_backgroundView setBackgroundColor:(_boxType == CPBoxPrimary) ? CPBoxPrimaryBezelBackgroundColor : CPBoxOldStyleBezelBackgroundColor];
+    [_backgroundView setAutoresizingMask:CPViewWidthSizable | CPViewHeightSizable];
+    [self addSubview:_backgroundView];
+    
+    _contentView = [[CPView alloc] initWithFrame:CGRectMakeZero()];
+    [self addSubview:_contentView];
 }
 
-- (void)setCornerRadius:(float)radius
+/* @ignore */
+- (void)_layoutSubviews
 {
-    if (radius === _cornerRadius)
-        return;
-
-    _cornerRadius = radius;
-    [self setNeedsDisplay:YES];
+    var backgroundRect = [self bounds],
+        labelViewHeight = (_titlePosition != CPNoTitle) ? [_CPBoxTitle height] : 0;
+        
+    backgroundRect.origin.y += labelViewHeight;
+    backgroundRect.size.height -= labelViewHeight;
+    [_backgroundView setFrame:backgroundRect];
+    
+    [_contentView setFrame:[self contentRect]];
 }
 
-- (CPColor)fillColor
+/*!
+    Returns the content rectangle.
+*/
+- (CGRect)contentRect
 {
-    return _fillColor;
+    var contentRect = [self bounds],
+        labelViewHeight = (_titlePosition != CPNoTitle) ? [_CPBoxTitle height] : 0;
+    
+    if(_boxType == CPBoxPrimary)
+    {
+        contentRect.origin.y += labelViewHeight + PRIMARY_TOP_INSET;
+        contentRect.size.height -= labelViewHeight + PRIMARY_TOP_INSET + PRIMARY_BOTTOM_INSET;
+    
+        contentRect.origin.x += PRIMARY_LEFT_INSET;
+        contentRect.size.width -= PRIMARY_LEFT_INSET + PRIMARY_RIGHT_INSET;
+    }
+    else
+    {
+        contentRect.origin.y += labelViewHeight + OLDSTYLE_TOP_INSET;
+        contentRect.size.height -= labelViewHeight + OLDSTYLE_TOP_INSET + OLDSTYLE_BOTTOM_INSET;
+    
+        contentRect.origin.x += OLDSTYLE_LEFT_INSET;
+        contentRect.size.width -= OLDSTYLE_LEFT_INSET + OLDSTYLE_RIGHT_INSET;
+    }
+
+    return contentRect;
 }
 
-- (void)setFillColor:(CPColor)color
+/*!
+    Returns the receiver’s box type.
+*/
+- (CPBoxType)boxType
 {
-    if ([color isEqual:_fillColor])
-        return;
-
-    _fillColor = color;
-    [self setNeedsDisplay:YES];
+    return _boxType;
 }
 
+/*!
+    Sets the box type.
+    @param aBoxType A constant describing the type of box; this must be a valid box type. These constants are described in CPBoxType.
+*/
+- (void)setBoxType:(CPBoxType)aBoxType
+{
+    _boxType = aBoxType;
+    
+    [_backgroundView setBackgroundColor:(_boxType == CPBoxPrimary) ? CPBoxPrimaryBezelBackgroundColor : CPBoxOldStyleBezelBackgroundColor];
+    
+    [self _layoutSubviews];
+}
+
+/*!
+    Returns the contentView of the box.
+*/
 - (CPView)contentView
 {
     return _contentView;
 }
 
+/*!
+    Sets the content view of the box. The view passed as an argument to this method will be resized to fit the box's bounds
+    @param aView the view that will be displayed inside for the box
+*/
 - (void)setContentView:(CPView)aView
 {
-    if (aView === _contentView)
+    if(_contentView === aView)
         return;
 
-    [aView setFrame:CGRectInset([self bounds], _contentMargin.width + _borderWidth, _contentMargin.height + _borderWidth)];
-    [self replaceSubview:_contentView with:aView];
+    [_contentView removeFromSuperview];
     
-    _contentView = aView;    
-}
-
-- (CPSize)contentViewMargins
-{
-    return _contentMargin;
-}
-
-- (void)setContentViewMargins:(CPSize)size
-{
-     if(size.width < 0 || size.height < 0)
-         [CPException raise:CPGenericException reason:@"Margins must be positive"];
-         
-    _contentMargin = CGSizeMakeCopy(size);
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setFrameFromContentFrame:(CPRect)aRect
-{
-    [self setFrame:CGRectInset(aRect, -(_contentMargin.width + _borderWidth), -(_contentMargin.height + _borderWidth))];
-    [self setNeedsDisplay:YES];
-}
-
-- (void)sizeToFit
-{
-    var contentFrame = [_contentView frame];
+    if(!aView)
+        aView = [[CPView alloc] initWithFrame:CGRectMakeZero()];
     
-    [self setFrameSize:CGSizeMake(contentFrame.size.width + _contentMargin.width * 2, 
-                                  contentFrame.size.height + _contentMargin.height * 2)];
-    
-    [_contentView setFrameOrigin:CGPointMake(_contentMargin.width, _contentMargin.height)];
+    _contentView = aView;
+    [self addSubview:_contentView];
+    [self _layoutSubviews];
 }
 
-- (void)drawRect:(CPRect)rect
+/*!
+    Returns the title of the box.
+*/
+- (CPString)title
 {
-    var bounds = [self bounds],
-        aContext = [[CPGraphicsContext currentContext] graphicsPort],
-        border2 = _borderWidth/2,
+    return [_titleField stringValue];
+}
 
-        strokeRect = CGRectMake(bounds.origin.x + border2, 
-                                bounds.origin.y + border2, 
-                                bounds.size.width - _borderWidth, 
-                                bounds.size.height - _borderWidth),
-                                
-        fillRect = CGRectMake(bounds.origin.x + border2, 
-                              bounds.origin.y + border2, 
-                              bounds.size.width - _borderWidth, 
-                              bounds.size.height - _borderWidth);
+/*!
+    Sets the title of the box.
+    @param aTitle the new title for the box
+*/
+- (void)setTitle:(CPString)aTitle
+{
+    [_titleField setStringValue:aTitle];
+}
 
-    CGContextSetFillColor(aContext, [self fillColor]);
-    CGContextSetStrokeColor(aContext, [self borderColor]);
-    CGContextSetLineWidth(aContext, _borderWidth);
+/*!
+    Returns the font object used to draw the box’s title.
+*/
+- (CPString)titleFont
+{
+    return [_titleField font];
+}
 
-    switch(_borderType)
+/*!
+    Sets the font object used to draw the box’s title.
+    @param aFont The CPFont object used to draw the box's title
+*/
+- (void)setTitleFont:(CPFont)aFont
+{
+    [_titleField setFont:aFont];
+}
+
+/*!
+    Returns a constant representing the title position.
+*/
+- (CPTitlePosition)titlePosition
+{
+    return _titlePosition;
+}
+
+/*!
+    Sets the position of the box's title.
+    @param aPosition A constant describing the position of the box's title. These constants are described in CPTitlePosition. The default position is CPAtTop.
+*/
+- (void)setTitlePosition:(CPTitlePosition)aPosition
+{
+    _titlePosition = aPosition;
+    
+    [self _layoutSubviews];
+}
+
+
+@end
+
+var CPBoxTypeKey         = "CPBoxTypeKey",
+    CPTitlePositionKey   = "CPTitlePositionKey",
+    CPTitleCellKey       = "CPTitleCellKey",
+    CPContentViewKey     = "CPContentViewKey",
+    BoxTitle             = "BoxTitle";
+        
+@implementation CPBox (CPCoding)
+
+- (id)initWithCoder:(CPCoder)aCoder
+{
+    if (self = [super initWithCoder:aCoder])
     {
-        case CPLineBorder:  CGContextFillRoundedRectangleInRect(aContext, fillRect, _cornerRadius, YES, YES, YES, YES);
-                            CGContextStrokeRoundedRectangleInRect(aContext, strokeRect, _cornerRadius, YES, YES, YES, YES);
-                            break;
-
-        case CPBezelBorder: CGContextFillRoundedRectangleInRect(aContext, fillRect, _cornerRadius, YES, YES, YES, YES);
-                            CGContextSetStrokeColor(aContext, [CPColor colorWithWhite:190.0/255.0 alpha:1.0]);
-                            CGContextBeginPath(aContext);
-                            CGContextMoveToPoint(aContext, strokeRect.origin.x, strokeRect.origin.y);
-                            CGContextAddLineToPoint(aContext, CGRectGetMinX(strokeRect), CGRectGetMaxY(strokeRect)),
-                            CGContextAddLineToPoint(aContext, CGRectGetMaxX(strokeRect), CGRectGetMaxY(strokeRect)),
-                            CGContextAddLineToPoint(aContext, CGRectGetMaxX(strokeRect), CGRectGetMinY(strokeRect)),
-                            CGContextStrokePath(aContext);
-                            CGContextSetStrokeColor(aContext, [CPColor colorWithWhite:142.0/255.0 alpha:1.0]);
-                            CGContextBeginPath(aContext);
-                            CGContextMoveToPoint(aContext, bounds.origin.x, strokeRect.origin.y);
-                            CGContextAddLineToPoint(aContext, CGRectGetMaxX(bounds), CGRectGetMinY(strokeRect));
-                            CGContextStrokePath(aContext);
-                            break;
-
-        default:            break;
+        _boxType       = [aCoder decodeIntForKey:CPBoxTypeKey];
+        _titlePosition = [aCoder decodeIntForKey:CPTitlePositionKey];
+        _titleFromNib  = [aCoder decodeObjectForKey:BoxTitle];
+        
+        [self _createSubviews];
+        
+        [self setContentView:[aCoder decodeObjectForKey:CPContentViewKey]];
     }
+
+    return self;
+}
+
+- (void)encodeWithCoder:(CPCoder)aCoder
+{
+    [super encodeWithCoder:aCoder];
+    
+    [aCoder encodeInt:_boxType         forKey:CPBoxTypeKey];
+    [aCoder encodeInt:_titlePosition   forKey:CPTitlePositionKey];
+    [aCoder encodeObject:_titleField   forKey:CPTitleCellKey];
+    [aCoder encodeObject:_contentView  forKey:CPContentViewKey];
+    [aCoder encodeObject:_titleFromNib forKey:BoxTitle];
+}
+
+@end
+
+
+
+var _CPBoxTitleViewHeight = 25.0;
+
+/* @ignore */
+@implementation _CPBoxTitle : CPView
+{
+    CPTextField     _titleField;
+}
+
++ (void)initialize
+{
+    if (self != [_CPBoxTitle class])
+        return;
+        
+    // nothing to initialize yet
+}
+
++ (float)height
+{
+    return _CPBoxTitleViewHeight;
+}
+
+- (id)initWithFrame:(CGRect)aFrame
+{
+    self = [super initWithFrame:aFrame];
+    
+    if (self)
+    {   
+        [self setFrameSize:CGSizeMake(CGRectGetWidth(aFrame), _CPBoxTitleViewHeight)];
+    
+        _titleField = [[CPTextField alloc] initWithFrame:CGRectMakeZero()];
+        [_titleField setAlignment:CPLeftTextAlignment];
+        [_titleField setFrame:CGRectMake(PRIMARY_LEFT_INSET - 2, 5.0, CGRectGetWidth(aFrame), 15.0)];
+        [_titleField setAutoresizingMask:CPViewWidthSizable];
+        [_titleField setFont:[CPFont systemFontOfSize:11.0]];
+        [self addSubview:_titleField];
+    }
+    
+    return self;
+}
+
+- (CPTextField)titleField
+{
+    return _titleField;
+}
+
+- (void)setTitleField:(CPTextField)aTitleField
+{
+    _titleField = aTitleField;
 }
 
 @end
