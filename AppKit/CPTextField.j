@@ -1107,8 +1107,7 @@ var CPTextFieldIsEditableKey            = "CPTextFieldIsEditableKey",
     CPTextFieldDrawsBackgroundKey       = "CPTextFieldDrawsBackgroundKey",
     CPTextFieldLineBreakModeKey         = "CPTextFieldLineBreakModeKey",
     CPTextFieldBackgroundColorKey       = "CPTextFieldBackgroundColorKey",
-    CPTextFieldPlaceholderStringKey     = "CPTextFieldPlaceholderStringKey",
-    CPTextFieldDelegateKey				= "CPTextFieldDelegateKey";
+    CPTextFieldPlaceholderStringKey     = "CPTextFieldPlaceholderStringKey";
 
 @implementation CPTextField (CPCoding)
 
@@ -1131,8 +1130,6 @@ var CPTextFieldIsEditableKey            = "CPTextFieldIsEditableKey",
         [self setTextFieldBackgroundColor:[aCoder decodeObjectForKey:CPTextFieldBackgroundColorKey]];
 
         [self setPlaceholderString:[aCoder decodeObjectForKey:CPTextFieldPlaceholderStringKey]];
-        
-        [self setDelegate:[aCoder decodeObjectForKey:CPTextFieldDelegateKey]];
     }
     
     return self;
@@ -1154,8 +1151,6 @@ var CPTextFieldIsEditableKey            = "CPTextFieldIsEditableKey",
     [aCoder encodeObject:_textFieldBackgroundColor forKey:CPTextFieldBackgroundColorKey];
     
     [aCoder encodeObject:_placeholderString forKey:CPTextFieldPlaceholderStringKey];
-    
-    [aCoder encodeObject:_delegate forKey:CPTextFieldDelegateKey];
 }
 
 @end
