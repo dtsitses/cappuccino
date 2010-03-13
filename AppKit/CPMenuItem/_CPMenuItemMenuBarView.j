@@ -155,12 +155,14 @@ var SelectionColor                              = nil,
 {
     // FIXME: This should probably be even throw.
     if (![_menuItem isEnabled])
-        return; 
+        shouldHighlight = NO;
 
     if (shouldHighlight)
     {
-        [self setBackgroundColor:SelectionColor];
+        if (![_menuItem _isMenuBarButton])
+            [self setBackgroundColor:SelectionColor];
 
+        [_imageAndTextView setImage:[_menuItem alternateImage] || [_menuItem image]];
         [_imageAndTextView setTextColor:[CPColor whiteColor]];
         [_imageAndTextView setTextShadowColor:_CPMenuItemTextShadowColor];
 
@@ -171,6 +173,7 @@ var SelectionColor                              = nil,
     {
         [self setBackgroundColor:nil];
 
+        [_imageAndTextView setImage:[_menuItem image]];
         [_imageAndTextView setTextColor:[self textColor]];
         [_imageAndTextView setTextShadowColor:[self textShadowColor]];
 

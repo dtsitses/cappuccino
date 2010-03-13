@@ -78,7 +78,7 @@ function CP_NSMapClassName(aClassName)
         
         if (CPClassFromString(mappedClassName))
         {
-            CPLog.warn("Mapping " + aClassName + " to " + mappedClassName);
+            CPLog.info("Mapping " + aClassName + " to " + mappedClassName);
 
             return mappedClassName;
         }
