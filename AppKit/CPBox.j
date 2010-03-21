@@ -238,17 +238,17 @@ var PRIMARY_LEFT_INSET    = 7.0,
     
     _titleView = [[_CPBoxTitle alloc] initWithFrame:CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), 0.0)];
     [_titleView setAutoresizingMask:CPViewWidthSizable];
-    [self addSubview:_titleView];
+    [super addSubview:_titleView];
     _titleField = [_titleView titleField];
     [_titleField setStringValue:_titleFromNib];
     
     _backgroundView = [[CPView alloc] initWithFrame:CGRectMakeZero()];
     [_backgroundView setBackgroundColor:(_boxType == CPBoxPrimary) ? CPBoxPrimaryBezelBackgroundColor : CPBoxOldStyleBezelBackgroundColor];
     [_backgroundView setAutoresizingMask:CPViewWidthSizable | CPViewHeightSizable];
-    [self addSubview:_backgroundView];
+    [super addSubview:_backgroundView];
     
     _contentView = [[CPView alloc] initWithFrame:CGRectMakeZero()];
-    [self addSubview:_contentView];
+    [super addSubview:_contentView];
 }
 
 /* @ignore */
@@ -336,7 +336,7 @@ var PRIMARY_LEFT_INSET    = 7.0,
         aView = [[CPView alloc] initWithFrame:CGRectMakeZero()];
     
     _contentView = aView;
-    [self addSubview:_contentView];
+    [super addSubview:_contentView];
     [self _layoutSubviews];
 }
 
@@ -469,7 +469,7 @@ var _CPBoxTitleViewHeight = 25.0;
         [_titleField setFrame:CGRectMake(PRIMARY_LEFT_INSET - 2, 5.0, CGRectGetWidth(aFrame), 15.0)];
         [_titleField setAutoresizingMask:CPViewWidthSizable];
         [_titleField setFont:[CPFont systemFontOfSize:11.0]];
-        [self addSubview:_titleField];
+        [super addSubview:_titleField];
     }
     
     return self;
