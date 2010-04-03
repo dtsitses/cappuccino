@@ -247,7 +247,7 @@ task ("demos", function()
 
 // Testing
 
-task("test", ["build", "test-only"]);
+task("test", ["CommonJS", "test-only"]);
 
 task("test-only", function()
 {
@@ -281,7 +281,7 @@ function pushPackage(path, remote, branch)
 {
     branch = branch || "master";
 
-    var pushPackagesPath = FILE.path(".push-package")
+    var pushPackagesPath = FILE.path(".push-package");
 
     pushPackagesPath.mkdirs();
 
