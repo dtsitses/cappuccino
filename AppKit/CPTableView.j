@@ -150,8 +150,8 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
     CPIndexSet  _exposedRows;
     CPIndexSet  _exposedColumns;
     
-    CPInteger   _clickedColumn @accessors(property=clickedColumn);
-    CPInteger   _clickedRow @accessors(property=clickedRow);
+    CPInteger   _clickedColumn @accessors(property=clickedColumn, readonly);
+    CPInteger   _clickedRow @accessors(property=clickedRow, readonly);
 
     Object      _dataViewsForTableColumns;
     Object      _cachedDataViews;
@@ -2533,14 +2533,16 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 - (BOOL)startTrackingAt:(CGPoint)aPoint
 {
     var row = [self rowAtPoint:aPoint],
-        col = [self columnAtPoint:aPoint],
-        tableColumn = _tableColumns[col],
-        tableColumnUID = [tableColumn UID],
-        dataView = _dataViewsForTableColumns[tableColumnUID][row];
-
+        col = [self columnAtPoint:aPoint];
+        
     if (_implementedDelegateMethods & CPTableViewDelegate_tableView_shouldTrackView_forTableColumn_row_)
+    {
+        var tableColumn = _tableColumns[col],
+            tableColumnUID = [tableColumn UID],
+            dataView = _dataViewsForTableColumns[tableColumnUID][row];
         if(![_delegate tableView:self shouldTrackView:dataView forTableColumn:tableColumn row:row])
             return;
+    }
 
      _clickedColumn = col;
      _clickedRow = row;
