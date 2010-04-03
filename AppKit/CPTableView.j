@@ -149,6 +149,9 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
     Object      _objectValues;
     CPIndexSet  _exposedRows;
     CPIndexSet  _exposedColumns;
+    
+    CPInteger   _clickedColumn @accessors(property=clickedColumn);
+    CPInteger   _clickedRow @accessors(property=clickedRow);
 
     Object      _dataViewsForTableColumns;
     Object      _cachedDataViews;
@@ -264,6 +267,8 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 
         _cornerView = [[_CPCornerView alloc] initWithFrame:CGRectMake(0, 0, [CPScroller scrollerWidth], CGRectGetHeight([_headerView frame]))];
 
+        _clickedColumn = -1;
+        _clickedRow = -1;
         _lastSelectedRow = -1;
         _selectedColumnIndexes = [CPIndexSet indexSet];
         _selectedRowIndexes = [CPIndexSet indexSet];
@@ -412,10 +417,7 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
     return _doubleAction;
 }
 
-/*
-    * - clickedColumn
-    * - clickedRow
-*/
+
 //Configuring Behavior
 
 - (void)setAllowsColumnReordering:(BOOL)shouldAllowColumnReordering
@@ -2530,7 +2532,18 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 */
 - (BOOL)startTrackingAt:(CGPoint)aPoint
 {
-    var row = [self rowAtPoint:aPoint];
+    var row = [self rowAtPoint:aPoint],
+        col = [self columnAtPoint:aPoint],
+        tableColumn = _tableColumns[col],
+        tableColumnUID = [tableColumn UID],
+        dataView = _dataViewsForTableColumns[tableColumnUID][row];
+
+    if (_implementedDelegateMethods & CPTableViewDelegate_tableView_shouldTrackView_forTableColumn_row_)
+        if(![_delegate tableView:self shouldTrackView:dataView forTableColumn:tableColumn row:row])
+            return;
+
+     _clickedColumn = col;
+     _clickedRow = row;
 
     //if the user clicks outside a row then deslect everything
     if (row < 0 && _allowsEmptySelection)
