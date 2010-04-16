@@ -220,6 +220,7 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
     CPColor     _sourceListInactiveTopLineColor;
     CPColor     _sourceListInactiveBottomLineColor;
 */
+    CPColor     _selectionColor @accessors(property=selectionColor);
 }
 
 - (id)initWithFrame:(CGRect)aFrame
@@ -888,7 +889,7 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 
 - (CPIndexSet)selectedColumnIndexes
 {
-    return _selectedColumnIndexes;
+    return [_selectedColumnIndexes copy];
 }
 
 - (int)selectedRow
@@ -898,7 +899,7 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 
 - (CPIndexSet)selectedRowIndexes
 {
-    return _selectedRowIndexes;
+    return [_selectedRowIndexes copy];
 }
 
 - (void)deselectColumn:(CPInteger)aColumn
@@ -2411,7 +2412,10 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
     
     if (!drawGradient)
     {
-        [[CPColor selectionColor] setFill];
+        if(_selectionColor)
+            [_selectionColor setFill];
+        else
+            [[CPColor selectionColor] setFill];
         CGContextFillPath(context);
     }
     
