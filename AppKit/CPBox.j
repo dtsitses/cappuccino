@@ -393,6 +393,14 @@ var PRIMARY_LEFT_INSET    = 7.0,
     [self _layoutSubviews];
 }
 
+- (void)setEnabled:(BOOL)isEnabled
+{
+    var subviews = [_contentView subviews],
+    	i = [subviews count];
+    while(i--)
+    	if([subviews[i] respondsToSelector:@selector(setEnabled:)])
+    		[subviews[i] setEnabled:isEnabled];
+}
 
 @end
 
