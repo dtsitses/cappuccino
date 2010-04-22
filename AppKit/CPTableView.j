@@ -3068,7 +3068,7 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 
 - (void)keyDown:(CPEvent)anEvent
 {
-    [self interpretKeyEvents:[CPArray arrayWithObject:anEvent]];
+    [self interpretKeyEvents:[anEvent]];
 }
 
 - (void)moveDown:(id)sender
