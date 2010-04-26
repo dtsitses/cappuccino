@@ -509,6 +509,9 @@ CPToolbarItemVisibilityPriorityUser
 
 - (void)validate
 {
+    var action = [self action],
+        target = [self target];
+
     // View items do not do any target-action analysis.
     if (_view)
     {
@@ -518,12 +521,8 @@ CPToolbarItemVisibilityPriorityUser
         return;
     }
 
-    var action = [self action];
-
     if (!action)
         return [self setEnabled:NO];
-
-    var target = [self target];
 
     if (target && ![target respondsToSelector:action])
         return [self setEnabled:NO];
