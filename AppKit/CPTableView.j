@@ -3502,7 +3502,7 @@ var CPTableViewDataSourceKey                = @"CPTableViewDataSourceKey",
 
         _usesAlternatingRowBackgroundColors = [aCoder decodeObjectForKey:CPTableViewUsesAlternatingBackgroundKey]
         _alternatingRowBackgroundColors =
-            [[CPColor whiteColor], [CPColor colorWithRed:245.0 / 255.0 green:249.0 / 255.0 blue:252.0 / 255.0 alpha:1.0]];
+            [[CPColor whiteColor], [CPColor colorWithHexString:@"e4e7ff"]];
 
         _headerView = [aCoder decodeObjectForKey:CPTableViewHeaderViewKey];
         _cornerView = [aCoder decodeObjectForKey:CPTableViewCornerViewKey];
