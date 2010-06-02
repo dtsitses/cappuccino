@@ -1132,8 +1132,9 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 */
 - (void)editColumn:(CPInteger)columnIndex row:(CPInteger)rowIndex withEvent:(CPEvent)theEvent select:(BOOL)flag
 {
-    if (![self isRowSelected:rowIndex])
-        [[CPException exceptionWithName:@"Error" reason:@"Attempt to edit row="+rowIndex+" when not selected." userInfo:nil] raise];
+// dtsitses: app-specific change
+//    if (![self isRowSelected:rowIndex])
+//        [[CPException exceptionWithName:@"Error" reason:@"Attempt to edit row="+rowIndex+" when not selected." userInfo:nil] raise];
 
     // TODO Do something with flag.
 
