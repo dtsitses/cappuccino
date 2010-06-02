@@ -326,7 +326,11 @@ var CPToolbarConfigurationsByIdentifier = nil;
     return _itemsSortedByVisibilityPriority;
 }
 
-- (void)validateVisibleToolbarItems
+/*!
+    Validates the visible toolbar items by sending a validate message to
+    each visible toolbar item.
+*/
+- (void)validateVisibleItems
 {
     var toolbarItems = [self visibleItems],
         count = [toolbarItems count];
