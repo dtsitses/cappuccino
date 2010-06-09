@@ -49,7 +49,7 @@
 
     [_textField setLineBreakMode:CPLineBreakByTruncatingTail];
     [_textField setTextColor:[CPColor colorWithRed:51.0 / 255.0 green:51.0 / 255.0 blue:51.0 / 255.0 alpha:1.0]];
-    [_textField setFont:[CPFont boldSystemFontOfSize:12.0]];
+    [_textField setFont:[CPFont systemFontOfSize:12.0]];
     [_textField setAlignment:CPLeftTextAlignment];
     [_textField setVerticalAlignment:CPCenterVerticalTextAlignment];
     [_textField setTextShadowColor:[CPColor whiteColor]];
