@@ -659,9 +659,9 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
         return;
 
     _sourceListActiveGradient        = [aDictionary valueForKey:CPSourceListGradient];
-    _sourceListActiveTopLineColor    = [aDictionary valueForKey:CPSourceListTopLineColor]
+    _sourceListActiveTopLineColor    = [aDictionary valueForKey:CPSourceListTopLineColor];
     _sourceListActiveBottomLineColor = [aDictionary valueForKey:CPSourceListBottomLineColor];
-    [self setNeedsDisplay:YES]
+    [self setNeedsDisplay:YES];
 }
 
 /*!
@@ -887,6 +887,22 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
     [self _noteSelectionDidChange];
 }
 
+- (void)_setSelectedRowIndexes:(CPIndexSet)rows
+{
+    var previousSelectedIndexes = [_selectedRowIndexes copy];
+
+    _lastSelectedRow = ([rows count] > 0) ? [rows lastIndex] : -1;
+    _selectedRowIndexes = [rows copy];
+
+    [self _updateHighlightWithOldRows:previousSelectedIndexes newRows:_selectedRowIndexes];
+    [_tableDrawView display]; // FIXME: should be setNeedsDisplayInRect:enclosing rect of new (de)selected rows
+                              // but currently -drawRect: is not implemented here
+
+    [[CPKeyValueBinding getBinding:@"selectionIndexes" forObject:self] reverseSetValueFor:@"selectedRowIndexes"];
+
+    [self _noteSelectionDidChange];
+}
+
 /*!
     Sets the row selection using indexes.
     @param rows a CPIndexSet of rows to select
@@ -907,17 +923,16 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
             [_headerView setNeedsDisplay:YES];
     }
 
-    var previousSelectedIndexes = [_selectedRowIndexes copy];
-
+    var newSelectedIndexes;
     if (shouldExtendSelection)
-        [_selectedRowIndexes addIndexes:rows];
+    {
+        newSelectedIndexes = [_selectedRowIndexes copy];
+        [newSelectedIndexes addIndexes:rows];
+    }
     else
-        _selectedRowIndexes = [rows copy];
+        newSelectedIndexes = [rows copy];
 
-    [self _updateHighlightWithOldRows:previousSelectedIndexes newRows:_selectedRowIndexes];
-    [_tableDrawView display]; // FIXME: should be setNeedsDisplayInRect:enclosing rect of new (de)selected rows
-                              // but currently -drawRect: is not implemented here
-    [self _noteSelectionDidChange];
+    [self _setSelectedRowIndexes:newSelectedIndexes];
 }
 
 - (void)_updateHighlightWithOldRows:(CPIndexSet)oldRows newRows:(CPIndexSet)newRows
@@ -1025,7 +1040,7 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 
 - (int)selectedRow
 {
-    return [_selectedRowIndexes lastIndex];
+    return _lastSelectedRow;
 }
 
 - (CPIndexSet)selectedRowIndexes
@@ -3086,15 +3101,16 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 {
 	// We don't use rowAtPoint here because the drag indicator can appear below the last row
 	// and rowAtPoint doesn't return rows that are larger than numberOfRows
-	var row = FLOOR(dragPoint.y / ( _rowHeight + _intercellSpacing.height ));
-
+    // FIX ME: this is going to break when we implement variable row heights... 
+	var row = FLOOR(dragPoint.y / ( _rowHeight + _intercellSpacing.height )),
 	// Determine if the mouse is currently closer to this row or the row below it
-	var lowerRow = row + 1,
+        lowerRow = row + 1,
 		rect = [self rectOfRow:row],
-		lowerRect = [self rectOfRow:lowerRow];
+        bottomPoint = CGRectGetMaxY(rect),
+        bottomThirty = bottomPoint - ((bottomPoint - CGRectGetMinY(rect)) * 0.3);
 
-	if (ABS(CPRectGetMinY(lowerRect) - dragPoint.y) < ABS(dragPoint.y - CPRectGetMinY(rect)))
-		row = lowerRow;
+    if (dragPoint.y > MAX(bottomThirty, bottomPoint - 6))
+    	row = lowerRow;
 
     if (row >= [self numberOfRows])
         row = [self numberOfRows];
@@ -3287,8 +3303,6 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
         }
     }
 
-    _lastSelectedRow = ([newSelection count] > 0) ? aRow : -1;
-
     // if empty selection is not allowed and the new selection has nothing selected, abort
     if (!_allowsEmptySelection && [newSelection count] === 0)
         return;
@@ -3377,6 +3391,11 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
         [self scrollRowToVisible:i];
 }
 
+- (void)moveDownAndModifySelection:(id)sender
+{
+    [self moveDown:sender];
+}
+
 - (void)moveUp:(id)sender
 {
     if (_implementedDelegateMethods & CPTableViewDelegate_selectionShouldChangeInTableView_ &&
@@ -3424,6 +3443,11 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
         [self scrollRowToVisible:i];
 }
 
+- (void)moveUpAndModifySelection:(id)sender
+{
+    [self moveUp:sender];
+}
+
 - (void)deleteBackward:(id)sender
 {
     if([_delegate respondsToSelector: @selector(tableViewDeleteKeyPressed:)])
@@ -3434,14 +3458,23 @@ CPTableViewFirstColumnOnlyAutoresizingStyle = 5;
 
 @implementation CPTableView (Bindings)
 
+- (CPString)_replacementKeyPathForBinding:(CPString)aBinding
+{
+    if (aBinding === @"selectionIndexes")
+        return @"selectedRowIndexes";
+
+    return [super _replacementKeyPathForBinding:aBinding];
+}
+
 - (void)_establishBindingsIfUnbound:(id)destination
 {
     if ([[self infoForBinding:@"content"] objectForKey:CPObservedObjectKey] !== destination)
-    {
         [self bind:@"content" toObject:destination withKeyPath:@"arrangedObjects" options:nil];
-        //[self bind:@"sortDescriptors" toObject:destination withKeyPath:@"sortDescriptors" options:nil];
-        //[self bind:@"selectionIndexes" toObject:destination withKeyPath:@"selectionIndexes" options:nil];
-    }
+
+    if ([[self infoForBinding:@"selectionIndexes"] objectForKey:CPObservedObjectKey] !== destination)
+        [self bind:@"selectionIndexes" toObject:destination withKeyPath:@"selectionIndexes" options:nil];
+
+    //[self bind:@"sortDescriptors" toObject:destination withKeyPath:@"sortDescriptors" options:nil];
 }
 
 - (void)setContent:(CPArray)content
@@ -3500,7 +3533,7 @@ var CPTableViewDataSourceKey                = @"CPTableViewDataSourceKey",
         _gridColor = [aCoder decodeObjectForKey:CPTableViewGridColorKey] || [CPColor grayColor];
         _gridStyleMask = [aCoder decodeIntForKey:CPTableViewGridStyleMaskKey] || CPTableViewGridNone;
 
-        _usesAlternatingRowBackgroundColors = [aCoder decodeObjectForKey:CPTableViewUsesAlternatingBackgroundKey]
+        _usesAlternatingRowBackgroundColors = [aCoder decodeObjectForKey:CPTableViewUsesAlternatingBackgroundKey];
         _alternatingRowBackgroundColors =
             [[CPColor whiteColor], [CPColor colorWithHexString:@"e4e7ff"]];
 

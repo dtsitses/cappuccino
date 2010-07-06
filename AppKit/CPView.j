@@ -1679,7 +1679,7 @@ setBoundsOrigin:
     var theWindow = [self window];
 
     [theWindow _noteUnregisteredDraggedTypes:_registeredDraggedTypes];
-    [_registeredDraggedTypes addObjectsFromArray:pasteboardTypes]
+    [_registeredDraggedTypes addObjectsFromArray:pasteboardTypes];
     [theWindow _noteRegisteredDraggedTypes:_registeredDraggedTypes];
 
     _registeredDraggedTypesArray = nil;
@@ -1791,12 +1791,14 @@ setBoundsOrigin:
 
 - (void)displayRectIgnoringOpacity:(CGRect)aRect inContext:(CPGraphicsContext)aGraphicsContext
 {
+#if PLATFORM(DOM)
     [self lockFocus];
     
     CGContextClearRect([[CPGraphicsContext currentContext] graphicsPort], aRect);
     
     [self drawRect:aRect];
     [self unlockFocus];
+#endif
 }
 
 - (void)viewWillDraw
