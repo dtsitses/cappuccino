@@ -1,9 +1,9 @@
 /*
  * NSToolbarSpaceItem.j
- * nib2cib
+ * AppKit
  *
- * Created by Dimitris Tsitses.
- * Copyright 2010, Blueberry Associates LLC.
+ * Created by Francisco Tolmasky.
+ * Copyright 2010, 280 North, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,22 +20,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-@import <AppKit/CPToolbarItem.j>
+@import <AppKit/_CPToolbarSpaceItem.j>
 
 
-
-@implementation NSToolbarSpaceItem : CPToolbarItem
+@implementation NSToolbarSpaceItem : _CPToolbarSpaceItem
 {
-}
-
-- (id)initWithCoder:(CPCoder)aCoder
-{
-    return [self NS_initWithCoder:aCoder];
 }
 
 - (Class)classForKeyedArchiver
 {
-    return [CPToolbarItem class];
+    return [_CPToolbarSpaceItem class];
 }
 
 @end
